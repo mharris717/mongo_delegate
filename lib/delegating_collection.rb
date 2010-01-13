@@ -19,17 +19,8 @@ module CollMod
 end
 
 class Mongo::Cursor
-  # alias_method :raw_to_a, :to_a
-  #  fattr(:to_a) { raw_to_a }
   fattr(:to_af) { to_a }
   include Enumerable
-end
-
-class Object
-  def scope_ninx(*args)
-    puts "scope_nin called"
-    scope_nin(*args)
-  end
 end
 
 class CompositeCursor
@@ -99,8 +90,8 @@ class DelegatingCollection
   def colls
     [local,remote]
   end
-  def save(*args)
-    local.save(*args)
+  def save(d)
+    local.save(d.merge('_duplicate' => true))
   end
 end
 
@@ -165,6 +156,10 @@ context DelegatingCollection do
     end
     mit 'respects skip and limit' do
       @d.find({},:skip => 1, :limit => 4).count.should == 4
+    end
+    mit 'count doesnt fetch records' do
+      dont_allow(Mongo::Cursor).to_a
+      @d.count.should == 6
     end
   end
   context 'save' do
