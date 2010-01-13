@@ -33,12 +33,26 @@ class Object
 end
 
 class CompositeCursor
+  class FindOps
+    attr_accessor :res, :cursor
+    include FromHash
+    def options; cursor.options; end
+    fattr(:num_using) { res.map { |x| x[0].to_af.size }.sum }
+    fattr(:found_ids) { res.map { |x| x[1].to_af.map { |x| x['_id'] } }.flatten }
+    fattr(:ops) do
+      r = {}
+      r[:limit] = (options[:limit] - num_using) if options[:limit]
+      r[:skip] = [(options[:skip] - found_ids.size ),0].max if options[:skip]
+      r
+    end
+    def zero_limit?
+      ops[:limit] == 0
+    end
+  end
+  
   attr_accessor :colls, :selector, :options
   include FromHash
   include Enumerable
-  fattr(:cursfors) do
-    colls.map { |x| x.find(selector) }
-  end
   fattr(:rows) do
     cursors.map { |x| x.to_af }.flatten
   end
@@ -52,24 +66,14 @@ class CompositeCursor
     rows.first
   end
   fattr(:cursors) do
-    found_ids = []
-    num_using = 0
-    colls.map do |coll|
-      ops = {}
-      ops[:limit] = (options[:limit] - num_using) if options[:limit]
-      ops[:skip] = [(options[:skip] - found_ids.size ),0].max if options[:skip]
-      #puts "ops #{ops.inspect}"
-      if !ops[:limit] || ops[:limit] > 0
-        coll.scope_nin('_id' => found_ids).find(selector,ops).tap do |cursor|
-          curr_ids = coll.find(selector).to_af.map { |x| x['_id'] }
-          found_ids += curr_ids
-          num_using += cursor.to_af.size
-          #puts "found_ids #{found_ids.size} cursor count #{cursor.count} cursor size #{cursor.to_af.size}"
-        end
+    colls.inject([]) do |res,coll|
+      ops = FindOps.new(:res => res, :cursor => self)
+      res + if !ops.zero_limit?
+        [[coll.scope_nin('_id' => ops.found_ids).find(selector,ops.ops),coll.find(selector)]]
       else
-        nil
+        []
       end
-    end.select { |x| x }
+    end.map { |x| x[0] }
   end
   fattr(:unpruned_cursors) do
     colls.map { |c| c.find(selector) }
@@ -86,8 +90,8 @@ class DelegatingCollection
   def find(selector={},options={})
     CompositeCursor.new(:colls => [local,remote],:selector => selector, :options => options)  
   end
-  def find_one(selector = {})
-    find(selector).first
+  def find_one(selector = {},options = {})
+    find(selector,options.merge(:limit => 1)).first
   end
   def remove
     colls.each { |x| x.remove }
@@ -104,8 +108,6 @@ Mongo::Collection.send(:include,CollMod)
 
 Spec::Runner.configure do |config|
   config.mock_with :rr
-  # or if that doesn't work due to a version incompatibility
-  # config.mock_with RR::Adapters::Rspec
 end
 
 def mit(name,&b)
