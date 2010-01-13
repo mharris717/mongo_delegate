@@ -11,7 +11,8 @@ begin
     gem.homepage = "http://github.com/mharris717/mongo_delegate"
     gem.authors = ["Mike Harris"]
     gem.add_development_dependency "rspec"
-    # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
+    gem.add_development_dependency "rr"
+    %w(mharris_ext andand fattr mongo mongo_scope activesupport).each { |x| gem.add_dependency x }
   end
   Jeweler::GemcutterTasks.new
 rescue LoadError
@@ -47,3 +48,5 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_files.include('README*')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
+
+Jeweler::GemcutterTasks.new
