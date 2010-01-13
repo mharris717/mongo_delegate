@@ -19,6 +19,7 @@ class CompositeCursor
   attr_accessor :colls, :selector, :options
   include FromHash
   include Enumerable
+  def to_af; rows; end
   fattr(:rows) do
     cursors.map { |x| x.to_af }.flatten
   end
@@ -26,7 +27,9 @@ class CompositeCursor
     rows.each(&b)
   end
   def count
-    rows.size
+    colls.map do |coll|
+      coll.scope_ne('_duplicate' => true).find(selector).count
+    end.sum
   end
   def first
     rows.first

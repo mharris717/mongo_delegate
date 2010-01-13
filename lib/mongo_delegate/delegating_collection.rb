@@ -25,7 +25,8 @@ module Mongo
       [local,remote]
     end
     def save(d)
-      local.save(d.merge('_duplicate' => true))
+      d = d.merge('_duplicate' => true) if d['_id'] && remote.find_one('_id' => d['_id'])
+      local.save(d)
     end
   end
 end

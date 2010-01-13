@@ -15,7 +15,7 @@ context Mongo::DelegatingCollection do
       @d.find.count.should == @all.size
     end
     it 'find doesnt return dups' do
-      @d.local.save(@d.remote.find_one(:name => 'Randy'))
+      @d.save(@d.remote.find_one(:name => 'Randy'))
       @d.find.count.should == @all.size
       @d.find.unpruned_rows.size.should == @all.size + 1
     end
@@ -30,7 +30,7 @@ context Mongo::DelegatingCollection do
       @d.find_one(:name => 'Randy')['age'].should == 'old'
     end
     it 'respects limit' do
-      @d.find({},:limit => 4).count.should == 4
+      @d.find({},:limit => 4).to_af.size.should == 4
       expected_names = @d.find.map { |x| x['name'] }[0...4].sort
       @d.find({},:limit => 4).map { |x| x['name'] }.sort.should == expected_names
     end
@@ -39,21 +39,26 @@ context Mongo::DelegatingCollection do
       @d.find({},:limit => 2).rows
     end
     it 'respects skip' do
-      @d.find({},:skip => 1).count.should == 5
+      @d.find({},:skip => 1).to_af.size.should == 5
       @d.find({},:skip => 1).map { |x| x['name'] }.sort.should == @all.reject { |x| x == 'Mike' }.sort
     end
     it 'respects skip whole collection' do
-      @d.find({},:skip => 4).count.should == 2
+      @d.find({},:skip => 4).to_af.size.should == 2
     end
     it 'wont return remote records that were skipped locally' do
       @d.local.save(@d.remote.find_one(:name => 'Randy'))
-      @d.find({},:skip => 5).count.should == 1
+      @d.find({},:skip => 5).to_af.size.should == 1
     end
     it 'respects skip and limit' do
-      @d.find({},:skip => 1, :limit => 4).count.should == 4
+      @d.find({},:skip => 1, :limit => 4).to_af.size.should == 4
     end
-    # it 'count doesnt fetch records' do
-    #   mock.instance_of(Mongo::Cursor).to_a.times(0)
+    it 'count doesnt fetch records' do
+      mock.instance_of(Mongo::Cursor).to_a.times(0)
+      @d.count.should == 6
+    end
+    # it 'count honors remote deletes' do
+    #   @d.remote.find.each { |x| @d.save(x) }
+    #   @d.remote.remove
     #   @d.count.should == 6
     # end
   end
@@ -64,6 +69,18 @@ context Mongo::DelegatingCollection do
       @d.count.should == @all.size + 1
       @d.remote.count.should == @remotes.size
       @d.local.count.should == @locals.size + 1
+    end
+    it 'updating a non-dup shouldnt mark it as a dup' do
+      r = @d.local.find_one(:name => 'Mike').merge(:foo => :bar)
+      @d.save(r)
+      @d.count.should == 6
+      @d.local.find_one(:name => 'Mike')['_duplicate'].should be_nil
+    end
+    it 'saving a dup for first time should mark it as a dup' do
+      r = @d.remote.find_one(:name => 'Randy')
+      @d.save(r)
+      @d.count.should == 6
+      @d.local.find_one(:name => 'Randy')['_duplicate'].should == true
     end
   end
 end
