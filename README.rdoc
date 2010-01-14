@@ -6,7 +6,7 @@ A DelegateCollection wraps a local collection and remote collection in one objec
 
 This was inspired by things I've been told about Goldman Sachs' proprietary object database.  You can point one database at another remote database, and it will function in this manner. 
 
-### The classic use case is debugging a production problem, or developing while using production data.
+### The classic use case is debugging a production problem, or developing while using production data. ###
 
 The annoying ways
 * Generate data that mimics production
