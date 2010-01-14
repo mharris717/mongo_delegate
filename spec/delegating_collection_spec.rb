@@ -3,7 +3,8 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 context Mongo::DelegatingCollection do
   def setup_coll
     @conn = Mongo::Connection.new
-    @d = Mongo::DelegatingCollection.new(:remote => @conn.db('dc-remote').collection('abc'), :local => @conn.db('dc-local').collection('abc'))
+    @db = Mongo::DelegatingDatabase.new(:remote => @conn.db('dc-remote'), :local => @conn.db('dc-local'))
+    @d = @db.collection('abc')
     @d.remove
     @remotes = %w(Ellen Randy Barbara).each { |x| @d.remote.save(:name => x) }
     @locals = %w(Mike Lou Lowell).each { |x| @d.local.save(:name => x) }
