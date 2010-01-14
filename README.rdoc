@@ -10,7 +10,7 @@ The classic use case is debugging a production problem, or developing while usin
 
 The annoying ways
 * Generate data that mimics production
-* get a production dump and load it locally
+* Get a production dump and load it locally
 * "Test" in production while walking on eggshells to make sure not to break anything
 
 The easy way
