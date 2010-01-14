@@ -2,19 +2,30 @@
 
 A DelegateCollection wraps a local collection and remote collection in one object that implements the Collection interface.
 * All reads are first done on the local collection, then supplemented by a read on the remote collection, if necessary.
-* All write occur in the local collection.  The remote collection is treated as read-only.
+* All writes occur in the local collection.  The remote collection is treated as read-only.
 
 This was inspired by things I've been told about Goldman Sachs' proprietary object database.  You can point one database at another remote database, and it will function in this manner. 
 
 The classic use case is debugging a production problem, or developing while using production data.  
-* The annoying way: Generate data that mimics production, get a production dump and load it locally, or "test" in production while walking on eggshells to make sure not to break anything
-* The easy way: Have your local app use a delegating collection that points at the production db.  Your app will be using live production data, but all writes occur locally.  As writes occur, the app will get your newly written data for those documents.  Your app can be oblivious to the delegation and function normally, and you can modify data without fear.  
+
+The annoying ways
+* Generate data that mimics production
+* get a production dump and load it locally
+* "Test" in production while walking on eggshells to make sure not to break anything
+
+The easy way
+* Have your local app use a delegating collection that points at the production db.  
+* Your app will be using live production data, but all writes occur locally.  
+* As writes occur, the app will get your newly written data for those documents.  
+* Your app can be oblivious to the delegation and function normally, and you can modify data without fear.  
 
 Just create a DelegatingDatabase and pass to your application, wherever you would normally supply a database
-  db = Mongo::DelegatingDatabase.new(:local => Mongo::Connection.new.db('db-name'), :remote => Mongo::Connection.new('remote ip').db('db-name'))
+  db = Mongo::DelegatingDatabase.new(:local => Mongo::Connection.new.db('db-name'), 
+                                     :remote => Mongo::Connection.new('remote ip').db('db-name'))
   
 Later, anywhere collections are retrieved in your app
-  coll = db.collection('some-collection-name') # This returns an instance of Mongo::DelegatingCollection
+  # This returns an instance of Mongo::DelegatingCollection
+  coll = db.collection('some-collection-name') 
 
 == Note on Patches/Pull Requests
  
