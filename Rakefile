@@ -5,8 +5,8 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name = "mongo_delegate"
-    gem.summary = %Q{restful interface to delegate mongodb records}
-    gem.description = %Q{restful interface to delegate mongodb records}
+    gem.summary = %Q{wrapper around multiple MongoDB collection, allowing programs to treat them as a single combined collection}
+    gem.description = %Q{wrapper around multiple MongoDB collection, allowing programs to treat them as a single combined collection}
     gem.email = "mharris717@gmail.com"
     gem.homepage = "http://github.com/mharris717/mongo_delegate"
     gem.authors = ["Mike Harris"]
