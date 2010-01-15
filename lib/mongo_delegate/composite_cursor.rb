@@ -36,9 +36,20 @@ class CompositeCursor
     def options; cursor.options; end
     fattr(:num_using) { res.map { |x| x[0].to_af.size }.sum }
     fattr(:found_ids) { res.map { |x| x[1].to_af.map { |x| x['_id'] } }.flatten }
+    fattr(:limit) do
+      if options[:limit]
+        if options[:sort]
+          options[:limit]
+        else
+          options[:limit] - num_using
+        end
+      else
+        nil
+      end
+    end
     fattr(:ops) do
       r = {}
-      r[:limit] = (options[:limit] - num_using) if options[:limit] && !options[:sort]
+      r[:limit] = limit if limit
       r[:skip] = [(options[:skip] - found_ids.size ),0].max if options[:skip] && !options[:sort]
       r[:sort] = options[:sort] if options[:sort]
       r
@@ -59,8 +70,11 @@ class CompositeCursor
       foc.map { |k,v| (v == 1) ? doc[k] : doc[k].sortflip }
     end
   end
+  fattr(:raw_rows) do
+    cursors.map { |x| x.to_af }.flatten
+  end
   fattr(:rows) do
-    res = cursors.map { |x| x.to_af }.flatten
+    res = raw_rows
     res = res.sort_by(&sort_proc) if sort_proc
     res = res[0...(options[:limit])] if options[:limit]
     res = res[(options[:skip])..-1] if options[:skip] && options[:sort]
